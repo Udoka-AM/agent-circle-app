@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Gilroy";
+  src: url("/fonts/Gilroy-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gilroy";
+  src: url("/fonts/Gilroy-ExtraBold.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #07090e;
   --background-elevated: #0c0f16;
@@ -16,15 +31,22 @@
 
   --grad-accent: linear-gradient(
     90deg,
-    #f7d5db 0%,
-    #f6d9c6 25%,
-    #f6edc8 50%,
-    #edf3b7 75%,
-    #e4f79a 100%
+    #1885ff 0%,
+    #4da3ff 40%,
+    #a8d4ff 72%,
+    #ffffff 100%
   );
-  --grad-accent-text: var(--grad-accent);
-  --accent-solid: #f0d9a8;
-  --accent-glow: rgba(246, 217, 198, 0.35);
+  --grad-brand: var(--grad-accent);
+  --grad-brand-soft: linear-gradient(
+    135deg,
+    rgba(24, 133, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  --on-accent: #07090e;
+  --on-primary: #ffffff;
+  --accent-glow: rgba(24, 133, 255, 0.35);
+  --ring: 0 0 0 2px var(--background), 0 0 0 4px rgba(24, 133, 255, 0.7);
+  --font-display: "Gilroy", var(--font-body), system-ui, sans-serif;
 }
 
 :root[data-theme="light"] {
@@ -41,23 +63,29 @@
   --positive: #1c9d6c;
   --negative: #d5453f;
 
-  --grad-accent-text: linear-gradient(
+  --grad-accent: linear-gradient(
     90deg,
-    #d94f74 0%,
-    #d98a3a 25%,
-    #c7a015 50%,
-    #7f9a1f 75%,
-    #5c9e1a 100%
+    #1568d6 0%,
+    #3d8fef 40%,
+    #8ebfff 72%,
+    #ffffff 100%
   );
-  --accent-solid: #b8863a;
-  --accent-glow: rgba(216, 160, 90, 0.28);
+  --grad-brand: var(--grad-accent);
+  --grad-brand-soft: linear-gradient(
+    135deg,
+    rgba(21, 104, 214, 0.16) 0%,
+    rgba(15, 18, 24, 0.04) 100%
+  );
+  --on-accent: #07090e;
+  --on-primary: #ffffff;
+  --accent-glow: rgba(21, 104, 214, 0.22);
+  --ring: 0 0 0 2px var(--background), 0 0 0 4px rgba(21, 104, 214, 0.65);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body), system-ui, sans-serif;
 }
 
 * {
@@ -74,16 +102,20 @@ html[data-theme="light"] {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   transition: background 200ms ease, color 200ms ease;
 }
 
+h1,
+h2,
+.display-heading {
+  font-family: var(--font-display);
+}
+
 .accent-text {
-  background: var(--grad-accent-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--logo-blue);
+  background: none;
+  -webkit-text-fill-color: unset;
 }
 
 .accent-border {
@@ -106,11 +138,122 @@ body {
   background: var(--accent-glow);
 }
 
+:where(
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="switch"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--logo-blue);
+  color: var(--on-primary);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 160ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--grad-accent);
+  color: var(--on-accent);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 160ms ease;
+}
+.btn-accent:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.btn-accent:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.chip {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.chip:hover:not(:disabled):not(.chip-selected) {
+  color: var(--foreground);
+  border-color: var(--border-strong);
+}
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.chip-selected {
+  border: 0;
+  background: var(--grad-accent);
+  color: var(--on-accent);
+}
+
+.card-surface {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
 .theme-toggle {
   border: 0;
   background: transparent;
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
 }
 .theme-toggle-track {
   position: relative;
@@ -138,9 +281,10 @@ body {
 }
 .theme-toggle:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 .theme-toggle:focus-visible .theme-toggle-track {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--logo-blue);
+  box-shadow: var(--ring);
 }
 
 .nav-link {
@@ -150,18 +294,40 @@ body {
   transition: color 160ms ease;
 }
 .nav-link:hover {
-  background: var(--grad-accent-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--logo-blue);
+  background: none;
+  -webkit-text-fill-color: unset;
+}
+.nav-link[data-active="true"] {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.hover-lift {
+  transition: transform 160ms ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ——— Solana wallet adapter overrides ——— */
 .wallet-adapter-button {
   background: var(--grad-accent) !important;
-  color: #1a1608 !important;
-  font-family: var(--font-sans), sans-serif !important;
+  color: var(--on-accent) !important;
+  font-family: var(--font-sans) !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   height: 38px !important;
@@ -216,7 +382,7 @@ body {
 }
 .wallet-adapter-dropdown-list-item {
   color: var(--foreground) !important;
-  font-family: var(--font-sans), sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 .wallet-adapter-dropdown-list-item:not([disabled]):hover {
   background: var(--background-elevated) !important;

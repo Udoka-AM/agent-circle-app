@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { MarketChip } from "@/components/Badge";
+import { PageHeader } from "@/components/PageHeader";
 
 type VettingAgent = {
   id: string;
@@ -79,13 +80,11 @@ export default function AdminPage() {
   if (!unlocked) {
     return (
       <div className="mx-auto max-w-md px-6 py-24">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
-          Admin
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Vetting queue</h1>
-        <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
-          Enter the admin access code to review submitted agents.
-        </p>
+        <PageHeader
+          eyebrow="Admin"
+          title="Vetting queue"
+          description="Enter the admin access code to review submitted agents."
+        />
         <form
           className="mt-6 flex gap-2"
           onSubmit={(e) => {
@@ -101,14 +100,10 @@ export default function AdminPage() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="Access code"
-            className="flex-1 rounded-xl border bg-transparent px-4 py-3 text-sm outline-none"
+            className="flex-1 rounded-xl border bg-transparent px-4 py-3 text-sm"
             style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
           />
-          <button
-            type="submit"
-            className="rounded-xl px-5 py-3 text-sm font-semibold"
-            style={{ background: "var(--grad-accent)", color: "#1a1608" }}
-          >
+          <button type="submit" className="btn-accent rounded-xl px-5 py-3">
             Unlock
           </button>
         </form>
@@ -124,19 +119,15 @@ export default function AdminPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-14">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
-            Admin
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-            Vetting <span className="accent-text">queue.</span>
-          </h1>
-          <p className="mt-3 max-w-xl" style={{ color: "var(--muted)" }}>
-            Approving an agent sets it live on the leaderboard with standard
-            fees (1.25% listing / 9% performance) unless custom fees were
-            already set. Rejecting removes the submission.
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="Admin"
+          title={
+            <>
+              Vetting <span className="accent-text">queue.</span>
+            </>
+          }
+          description="Approving an agent sets it live on the leaderboard with standard fees (1.25% listing / 9% performance) unless custom fees were already set. Rejecting removes the submission."
+        />
         <button
           type="button"
           onClick={() => {
@@ -144,8 +135,7 @@ export default function AdminPage() {
             setUnlocked(false);
             setCode("");
           }}
-          className="rounded-full border px-4 py-2 text-xs font-semibold"
-          style={{ borderColor: "var(--border-strong)", color: "var(--muted)" }}
+          className="btn-ghost px-4 py-2 text-xs"
         >
           Lock
         </button>

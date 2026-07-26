@@ -34,17 +34,14 @@ export function AgentsGrid({ agents }: { agents: Agent[] }) {
   return (
     <>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by market">
           {MARKETS.map((m) => (
             <button
               key={m}
+              type="button"
               onClick={() => setMarket(m)}
-              className="rounded-full px-4 py-2 text-xs font-semibold transition"
-              style={
-                market === m
-                  ? { background: "var(--grad-accent)", color: "#1a1608" }
-                  : { border: "1px solid var(--border)", color: "var(--muted)" }
-              }
+              aria-pressed={market === m}
+              className={`chip ${market === m ? "chip-selected" : ""}`}
             >
               {m}
             </button>
@@ -66,81 +63,90 @@ export function AgentsGrid({ agents }: { agents: Agent[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((agent) => (
-          <Link
-            key={agent.id}
-            href={`/agents/${agent.slug}`}
-            className="group flex flex-col gap-4 rounded-2xl border p-6 transition hover:-translate-y-0.5"
-            style={{
-              borderColor: agent.rank === 1 ? "transparent" : "var(--border)",
-              background: "var(--card)",
-              ...(agent.rank === 1
-                ? {
-                    backgroundImage:
-                      "linear-gradient(var(--card), var(--card)), var(--grad-accent)",
-                    backgroundOrigin: "border-box",
-                    backgroundClip: "padding-box, border-box",
-                    border: "1px solid transparent",
-                  }
-                : {}),
-            }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AgentAvatar name={agent.name} size={44} ring={agent.rank <= 3 && agent.rank > 0} />
-                <div>
-                  <div className="text-sm font-semibold">{agent.name}</div>
-                  <div className="text-xs" style={{ color: "var(--muted)" }}>
-                    {agent.builder.name}
+      {filtered.length === 0 ? (
+        <div
+          className="rounded-2xl border px-5 py-10 text-center text-sm"
+          style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--muted)" }}
+        >
+          No agents in this market yet.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((agent) => (
+            <Link
+              key={agent.id}
+              href={`/agents/${agent.slug}`}
+              className="group hover-lift flex flex-col gap-4 rounded-2xl border p-6"
+              style={{
+                borderColor: agent.rank === 1 ? "transparent" : "var(--border)",
+                background: "var(--card)",
+                ...(agent.rank === 1
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(var(--card), var(--card)), var(--grad-accent)",
+                      backgroundOrigin: "border-box",
+                      backgroundClip: "padding-box, border-box",
+                      border: "1px solid transparent",
+                    }
+                  : {}),
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <AgentAvatar name={agent.name} size={44} ring={agent.rank <= 3 && agent.rank > 0} />
+                  <div>
+                    <div className="text-sm font-semibold">{agent.name}</div>
+                    <div className="text-xs" style={{ color: "var(--muted)" }}>
+                      {agent.builder.name}
+                    </div>
                   </div>
                 </div>
+                <StatusBadge status={agent.status} />
               </div>
-              <StatusBadge status={agent.status} />
-            </div>
 
-            <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-              {agent.description}
-            </p>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+                {agent.description}
+              </p>
 
-            <div className="flex items-center justify-between">
-              <MarketChip market={agent.market} />
-              {agent.status === "live" && <Sparkline data={agent.history} width={72} height={28} />}
-            </div>
-
-            {agent.status === "live" ? (
-              <div className="grid grid-cols-3 gap-3 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="tabular text-sm font-semibold">{agent.agentScore.toFixed(1)}</div>
-                  <div className="text-[11px]" style={{ color: "var(--muted)" }}>
-                    Score
-                  </div>
-                </div>
-                <div>
-                  <div className="tabular text-sm font-semibold" style={{ color: "var(--positive)" }}>
-                    +{agent.totalReturn}%
-                  </div>
-                  <div className="text-[11px]" style={{ color: "var(--muted)" }}>
-                    Return
-                  </div>
-                </div>
-                <div>
-                  <div className="tabular text-sm font-semibold" style={{ color: "var(--negative)" }}>
-                    {agent.maxDrawdown}%
-                  </div>
-                  <div className="text-[11px]" style={{ color: "var(--muted)" }}>
-                    Drawdown
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <MarketChip market={agent.market} />
+                {agent.status === "live" && <Sparkline data={agent.history} width={72} height={28} />}
               </div>
-            ) : (
-              <div className="border-t pt-4 text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
-                Performance record unlocks once vetting completes.
-              </div>
-            )}
-          </Link>
-        ))}
-      </div>
+
+              {agent.status === "live" ? (
+                <div className="grid grid-cols-3 gap-3 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+                  <div>
+                    <div className="tabular text-sm font-semibold">{agent.agentScore.toFixed(1)}</div>
+                    <div className="text-[11px]" style={{ color: "var(--muted)" }}>
+                      Score
+                    </div>
+                  </div>
+                  <div>
+                    <div className="tabular text-sm font-semibold" style={{ color: "var(--positive)" }}>
+                      +{agent.totalReturn}%
+                    </div>
+                    <div className="text-[11px]" style={{ color: "var(--muted)" }}>
+                      Return
+                    </div>
+                  </div>
+                  <div>
+                    <div className="tabular text-sm font-semibold" style={{ color: "var(--negative)" }}>
+                      {agent.maxDrawdown}%
+                    </div>
+                    <div className="text-[11px]" style={{ color: "var(--muted)" }}>
+                      Drawdown
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t pt-4 text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+                  Performance record unlocks once vetting completes.
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      )}
     </>
   );
 }

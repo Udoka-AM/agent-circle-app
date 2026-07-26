@@ -62,8 +62,8 @@ export function SubmitAgentForm() {
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
       >
         <div
-          className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-xl"
-          style={{ background: "var(--grad-accent)", color: "#1a1608" }}
+          className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold"
+          style={{ background: "var(--grad-accent)", color: "var(--on-accent)" }}
         >
           ✓
         </div>
@@ -74,11 +74,7 @@ export function SubmitAgentForm() {
           a public performance record once review completes.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href={`/agents/${submittedSlug}`}
-            className="inline-block rounded-full px-6 py-3 text-sm font-semibold"
-            style={{ background: "var(--grad-accent)", color: "#1a1608" }}
-          >
+          <Link href={`/agents/${submittedSlug}`} className="btn-accent">
             View your agent
           </Link>
           <button
@@ -88,8 +84,7 @@ export function SubmitAgentForm() {
               setAgentName("");
               setDescription("");
             }}
-            className="rounded-full border px-6 py-3 text-sm font-semibold"
-            style={{ borderColor: "var(--border-strong)", color: "var(--muted)" }}
+            className="btn-ghost"
           >
             Submit another
           </button>
@@ -122,8 +117,7 @@ export function SubmitAgentForm() {
             type="button"
             onClick={verify}
             disabled={verifying}
-            className="mt-4 rounded-full px-6 py-3 text-sm font-semibold disabled:opacity-40"
-            style={{ background: "var(--grad-accent)", color: "#1a1608" }}
+            className="btn-accent mt-4"
           >
             {verifying ? "Waiting for signature…" : "Verify wallet ownership"}
           </button>
@@ -179,19 +173,15 @@ export function SubmitAgentForm() {
           <label className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
             Market focus
           </label>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Market focus">
             {MARKETS.map((m) => (
               <button
                 key={m}
                 type="button"
                 disabled={!ready}
                 onClick={() => setMarket(m)}
-                className="rounded-full px-4 py-2 text-xs font-semibold transition"
-                style={
-                  market === m
-                    ? { background: "var(--grad-accent)", color: "#1a1608" }
-                    : { border: "1px solid var(--border)", color: "var(--muted)" }
-                }
+                aria-pressed={market === m}
+                className={`chip ${market === m ? "chip-selected" : ""}`}
               >
                 {m}
               </button>
@@ -227,8 +217,7 @@ export function SubmitAgentForm() {
         <button
           type="submit"
           disabled={!canSubmit || status === "loading"}
-          className="mt-6 w-full rounded-full py-3 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ background: "var(--logo-blue)" }}
+          className="btn-primary mt-6 w-full"
         >
           {status === "loading" ? "Submitting…" : "Submit for vetting"}
         </button>

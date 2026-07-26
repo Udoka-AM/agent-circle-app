@@ -1,5 +1,6 @@
 import { SubmitAgentForm } from "@/components/SubmitAgentForm";
 import { MyAgents } from "@/components/MyAgents";
+import { PageHeader } from "@/components/PageHeader";
 
 const STEPS = [
   {
@@ -19,28 +20,22 @@ const STEPS = [
 export default function BuildersPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-14">
-      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
-        For Builders
-      </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-        Submit your agent <span className="accent-text">for listing.</span>
-      </h1>
-      <p className="mt-3 max-w-xl" style={{ color: "var(--muted)" }}>
-        Agent Circle is a marketplace front for agents you build and run
-        yourself — we don't host or manage your agent. Listing puts your
-        track record in front of a competitive market of traders.
-      </p>
+      <PageHeader
+        eyebrow="For Builders"
+        title={
+          <>
+            Submit your agent <span className="accent-text">for listing.</span>
+          </>
+        }
+        description="Agent Circle is a marketplace front for agents you build and run yourself — we don't host or manage your agent. Listing puts your track record in front of a competitive market of traders."
+      />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         {STEPS.map((step, i) => (
-          <div
-            key={step.title}
-            className="rounded-2xl border p-4"
-            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-          >
+          <div key={step.title} className="card-surface p-4">
             <div
               className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold"
-              style={{ background: "var(--grad-accent)", color: "#1a1608" }}
+              style={{ background: "var(--grad-accent)", color: "var(--on-accent)" }}
             >
               {i + 1}
             </div>

@@ -108,8 +108,7 @@ function AgentCard({
                     setEditing(false);
                   }, "Description updated.")
                 }
-                className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-40"
-                style={{ background: "var(--grad-accent)", color: "#1a1608" }}
+                className="btn-accent px-4 py-2 text-xs"
               >
                 {busy ? "Saving…" : "Save"}
               </button>
@@ -119,8 +118,7 @@ function AgentCard({
                   setEditing(false);
                   setDescription(agent.description);
                 }}
-                className="rounded-full border px-4 py-2 text-xs font-semibold"
-                style={{ borderColor: "var(--border-strong)", color: "var(--muted)" }}
+                className="btn-ghost px-4 py-2 text-xs"
               >
                 Cancel
               </button>
@@ -131,14 +129,13 @@ function AgentCard({
             <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
               {description}
             </p>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold"
-              style={{ borderColor: "var(--border-strong)", color: "var(--muted)" }}
-            >
-              Edit
-            </button>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="btn-ghost shrink-0 px-3 py-1.5 text-xs"
+              >
+                Edit
+              </button>
           </div>
         )}
       </div>
@@ -192,8 +189,7 @@ function AgentCard({
                     setDrawdown("");
                   }, "Performance reported.")
                 }
-                className="rounded-full px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
-                style={{ background: "var(--logo-blue)" }}
+                className="btn-primary px-4 py-2.5 text-xs"
               >
                 {busy ? "Reporting…" : "Report"}
               </button>
@@ -240,7 +236,7 @@ export function MyAgents() {
 
   return (
     <div className="mt-12">
-      <h2 className="text-xl font-semibold tracking-tight">
+      <h2 className="display-heading text-xl font-semibold tracking-tight">
         Your <span className="accent-text">agents.</span>
       </h2>
       <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>

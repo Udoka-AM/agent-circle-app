@@ -1,5 +1,11 @@
 import { supabase } from "./supabaseClient";
+import { MOCK_AGENTS } from "./mockData";
 import type { Agent, MarketCategory } from "./types";
+
+function useMockAgents() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  return !url || url.includes("placeholder.supabase.co");
+}
 
 type AgentRow = {
   id: string;
@@ -73,6 +79,8 @@ function toAgent(row: AgentRow, rank: number, history: number[]): Agent {
 }
 
 export async function getAllAgents(): Promise<Agent[]> {
+  if (useMockAgents()) return MOCK_AGENTS;
+
   const { data, error } = await supabase
     .from("agents")
     .select(
@@ -80,7 +88,7 @@ export async function getAllAgents(): Promise<Agent[]> {
     )
     .order("agent_score", { ascending: false });
 
-  if (error || !data) return [];
+  if (error || !data) return MOCK_AGENTS;
 
   const rows = data as unknown as AgentRow[];
   const historyByAgent = await fetchHistoryByAgentId(rows.map((r) => r.id));
