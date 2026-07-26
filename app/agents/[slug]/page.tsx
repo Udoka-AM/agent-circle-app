@@ -30,7 +30,7 @@ export default async function AgentProfilePage({
           <AgentAvatar name={agent.name} size={64} ring={agent.rank > 0 && agent.rank <= 3} />
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-semibold tracking-tight">{agent.name}</h1>
+              <h1 className="display-heading text-3xl font-semibold tracking-tight">{agent.name}</h1>
               {agent.rank > 0 && <RankBadge rank={agent.rank} />}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -43,11 +43,7 @@ export default async function AgentProfilePage({
           </div>
         </div>
 
-        <Link
-          href={`/agents/${agent.slug}/list`}
-          className="rounded-full px-6 py-3 text-sm font-semibold text-white"
-          style={{ background: "var(--logo-blue)" }}
-        >
+        <Link href={`/agents/${agent.slug}/list`} className="btn-primary">
           List this agent
         </Link>
       </div>
@@ -65,11 +61,7 @@ export default async function AgentProfilePage({
               { label: "Consistency", value: agent.consistency },
               { label: "Max Drawdown", value: `${agent.maxDrawdown}%`, negative: true },
             ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-2xl border p-5"
-                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-              >
+              <div key={stat.label} className="card-surface p-5">
                 <div
                   className="tabular text-2xl font-semibold"
                   style={{ color: stat.negative ? "var(--negative)" : "var(--foreground)" }}
@@ -83,10 +75,7 @@ export default async function AgentProfilePage({
             ))}
           </div>
 
-          <div
-            className="mt-6 rounded-2xl border p-6"
-            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-          >
+          <div className="card-surface mt-6 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold">Cumulative return</div>
@@ -99,22 +88,16 @@ export default async function AgentProfilePage({
           </div>
         </>
       ) : (
-        <div
-          className="mt-10 rounded-2xl border p-8 text-sm"
-          style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--muted)" }}
-        >
+        <div className="card-surface mt-10 p-8 text-sm" style={{ color: "var(--muted)" }}>
           This agent is completing Phase 1 vetting. Performance history and
-          listing open once it's approved for the leaderboard.
+          listing open once it&apos;s approved for the leaderboard.
         </div>
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div
-          className="rounded-2xl border p-6"
-          style={{ borderColor: "var(--border)", background: "var(--card)" }}
-        >
+        <div className="card-surface p-6">
           <h2 className="text-sm font-semibold">Default risk controls</h2>
-          <dl className="mt-4 space-y-3 text-sm">
+          <dl className="mt-4 flex flex-col gap-3 text-sm">
             <div className="flex justify-between">
               <dt style={{ color: "var(--muted)" }}>Position cap</dt>
               <dd className="tabular font-medium">{agent.riskDefaults.positionCapPct}%</dd>
@@ -130,12 +113,9 @@ export default async function AgentProfilePage({
           </dl>
         </div>
 
-        <div
-          className="rounded-2xl border p-6"
-          style={{ borderColor: "var(--border)", background: "var(--card)" }}
-        >
+        <div className="card-surface p-6">
           <h2 className="text-sm font-semibold">Fees</h2>
-          <dl className="mt-4 space-y-3 text-sm">
+          <dl className="mt-4 flex flex-col gap-3 text-sm">
             <div className="flex justify-between">
               <dt style={{ color: "var(--muted)" }}>Listing fee</dt>
               <dd className="tabular font-medium">{(agent.listingFeeBps / 100).toFixed(2)}%</dd>

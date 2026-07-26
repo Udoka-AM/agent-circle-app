@@ -9,6 +9,7 @@ import { isSessionInvalidError } from "@/lib/auth";
 import { useSiws } from "@/hooks/useSiws";
 import type { Agent } from "@/lib/types";
 import { AgentAvatar } from "@/components/AgentAvatar";
+import { PageHeader } from "@/components/PageHeader";
 import { WalletButton } from "@/components/WalletButton";
 
 type Row = {
@@ -90,19 +91,23 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
-        Monitoring
-      </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-        Your <span className="accent-text">listed agents.</span>
-      </h1>
-      <p className="mt-3 max-w-xl" style={{ color: "var(--muted)" }}>
-        Track performance, exposure, and risk-limit status for every agent
-        you've listed.{" "}
-        {authed
-          ? "Showing listings tied to your verified wallet."
-          : "Sample data shown below — connect and verify a wallet to see your own."}
-      </p>
+      <PageHeader
+        eyebrow="Monitoring"
+        title={
+          <>
+            Your <span className="accent-text">listed agents.</span>
+          </>
+        }
+        description={
+          <>
+            Track performance, exposure, and risk-limit status for every agent
+            you&apos;ve listed.{" "}
+            {authed
+              ? "Showing listings tied to your verified wallet."
+              : "Sample data shown below — connect and verify a wallet to see your own."}
+          </>
+        }
+      />
 
       {!connected && (
         <div
@@ -130,13 +135,7 @@ export default function DashboardPage() {
               </span>
             )}
           </p>
-          <button
-            type="button"
-            onClick={verify}
-            disabled={verifying}
-            className="rounded-full px-5 py-2.5 text-xs font-semibold disabled:opacity-40"
-            style={{ background: "var(--grad-accent)", color: "#1a1608" }}
-          >
+          <button type="button" onClick={verify} disabled={verifying} className="btn-accent px-5 py-2.5 text-xs">
             {verifying ? "Waiting for signature…" : "Verify wallet"}
           </button>
         </div>
@@ -152,11 +151,7 @@ export default function DashboardPage() {
             Listing execution opens at Phase 1 launch once the on-chain programs
             are live. Browse the leaderboard in the meantime.
           </p>
-          <Link
-            href="/"
-            className="mt-5 inline-block rounded-full px-6 py-3 text-sm font-semibold"
-            style={{ background: "var(--grad-accent)", color: "#1a1608" }}
-          >
+          <Link href="/" className="btn-accent mt-5">
             Explore agents
           </Link>
         </div>

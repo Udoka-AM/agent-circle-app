@@ -87,8 +87,7 @@ export function ListForm({ agent }: { agent: Agent }) {
             type="button"
             onClick={() => setSubmitted(true)}
             disabled={!capital}
-            className="mt-6 w-full rounded-full py-3 text-sm font-semibold text-white disabled:opacity-40"
-            style={{ background: "var(--logo-blue)" }}
+            className="btn-primary mt-6 w-full"
           >
             Review &amp; List
           </button>

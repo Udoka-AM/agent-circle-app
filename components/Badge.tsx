@@ -17,7 +17,14 @@ export function StatusBadge({ status }: { status: AgentStatus }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[var(--muted)]">
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide"
+      style={{
+        borderColor: "var(--border-strong)",
+        background: "var(--card-solid)",
+        color: "var(--muted)",
+      }}
+    >
       {STATUS_LABEL[status]}
     </span>
   );
@@ -36,10 +43,11 @@ export function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={`tabular flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-        isTop3 ? "text-black" : "text-[var(--muted)]"
+        isTop3 ? "" : "text-[var(--muted)]"
       }`}
       style={{
         background: isTop3 ? "var(--grad-accent)" : "var(--card-solid)",
+        color: isTop3 ? "var(--on-accent)" : undefined,
         border: isTop3 ? "none" : "1px solid var(--border)",
       }}
     >
