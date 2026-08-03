@@ -1,7 +1,28 @@
 # Agent Registry & Agent Vault — Program Architecture, Contract Structure & Experience Flow
 
-**Status:** Draft for contractor review · Solana / Anchor first, written to stay EVM-portable
+**Status:** Spec v0.2 · Economic parameters locked · Solana / Anchor first, written to stay EVM-portable
 **Scope:** The two custom on-chain programs required for Phase 1
+**Single source of truth** — supersedes all earlier draft specs.
+
+---
+
+## 0. Locked parameters
+
+These are **decided**, not suggestions. Build against them.
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Listing fee | **0 bps** | Field exists and is configurable; set to zero at launch |
+| Performance fee | **1000 bps** (10%) | Of net new profit above high-water mark |
+| Builder split | **8000 bps** (80%) | Platform takes remaining 20% → 2% of trader profit |
+| Management fee | **None — never introduce** | Not a field. Deliberately absent. |
+| Fee assessment | On withdrawal **+ weekly crank** | Whichever comes first |
+| Unbonding period | **14 days** | Bond remains slashable throughout |
+| Default position cap | **1200 bps** (12%) | Per-vault; trader may override stricter only |
+| Default max drawdown | **1500 bps** (15%) | Per-vault; trader may override stricter only |
+| Slash split | **70% harmed traders / 30% buyback** | Never 100% to treasury |
+
+**Still open — see §9:** bond tier amounts, whitelisted venues, quote token, upgrade authority, crank operator.
 
 ---
 
@@ -35,11 +56,18 @@ Inside a program-controlled vault, all three are automatic and trustless.
 
 ### 1.2 What the vault is *not*
 
-- **You cannot move trader funds.** The trader is the sole withdrawal authority.
+- **The platform cannot move trader funds.** The trader is the sole withdrawal authority.
 - **The agent cannot move trader funds.** It holds scoped trade permission only.
-- **You do not host agents.** Builder code runs on builder infrastructure.
+- **The platform does not host agents.** Builder code runs on builder infrastructure.
 
 Residual exposure is **code correctness** — which is what the audit gate exists for.
+
+### 1.3 Deliberately NOT custom programs
+
+- **Revenue-share streaming** → Streamflow
+- **Treasury / multisig** → Squads
+- **Buyback execution** → Jupiter Swap API + keeper (Phase 2)
+- **Sub-tokens** → Meteora DBC (Phase 2)
 
 ---
 
@@ -55,7 +83,7 @@ A frequent source of confusion. Nothing about the vault changes the self-hosted 
 | Discovery, metadata, admin, history | **Agent Circle app + Supabase** | Leaderboard, profiles, vetting queue, indexed trades |
 
 The builder's bot is an ordinary program running wherever they like. It simply holds a
-keypair that has scoped authority to call `execute_trade` on vaults assigned to its listing.
+keypair with scoped authority to call `execute_trade` on vaults assigned to its listing.
 
 ---
 
@@ -78,19 +106,19 @@ keypair that has scoped authority to call `execute_trade` on vaults assigned to 
 
 **`AgentListing`** — PDA seeds `["agent", builder, agent_seed]`
 
-| Field | Type | Notes |
+| Field | Type | Launch value |
 |---|---|---|
 | `builder` | `Pubkey` | |
 | `agent_authority` | `Pubkey` | The bot's signing key — rotatable |
 | `status` | `ListingStatus` | `Vetting` / `Live` / `Paused` / `Delisted` |
 | `market` | `u8` | Enum matching app market categories |
-| `metadata_hash` | `[u8; 32]` | Hash of off-chain description; keeps chain cheap, content tamper-evident |
-| `listing_fee_bps` | `u16` | Recommended **0** at launch |
-| `performance_fee_bps` | `u16` | Recommended **1000** (10%) |
-| `builder_split_bps` | `u16` | Recommended **8000** (80% to builder) |
-| `position_cap_bps` | `u16` | Default risk limit |
-| `max_drawdown_bps` | `u16` | Default risk limit |
-| `auto_pause` | `bool` | |
+| `metadata_hash` | `[u8; 32]` | Hash of off-chain description — keeps chain cheap, content tamper-evident |
+| `listing_fee_bps` | `u16` | **0** |
+| `performance_fee_bps` | `u16` | **1000** |
+| `builder_split_bps` | `u16` | **8000** |
+| `position_cap_bps` | `u16` | **1200** |
+| `max_drawdown_bps` | `u16` | **1500** |
+| `auto_pause` | `bool` | `true` |
 | `aum_current` | `u64` | Sum of vault principal — enforced against tier ceiling |
 | `aum_ceiling` | `u64` | Derived from builder tier |
 | `vault_count` | `u32` | |
@@ -105,14 +133,14 @@ keypair that has scoped authority to call `execute_trade` on vaults assigned to 
 |---|---|---|
 | `register_builder` | Builder | Creates `Builder` PDA |
 | `stake_bond(amount)` | Builder | Transfers $AGENT to `BondVault`, recomputes tier |
-| `request_unbond` | Builder | Starts 14-day clock; blocks new vault deposits |
+| `request_unbond` | Builder | Starts 14-day clock; **blocks new vault deposits immediately** |
 | `withdraw_bond(amount)` | Builder | Only after 14 days **and** only down to the tier still covering current AUM |
 | `submit_listing(agent_authority, market, metadata_hash)` | Builder | Status → `Vetting` |
 | `approve_listing(fee_config)` | **Multisig** | Status → `Live`, writes fee + risk config |
 | `pause_listing` | Builder or multisig | Blocks new deposits and trades; existing vaults can still withdraw |
 | `delist` | Builder or multisig | Terminal |
-| `rotate_agent_authority(new_key)` | Builder | Key-compromise recovery — **must exist** |
-| `slash_bond(amount, reason_hash)` | **Multisig** | Split: harmed traders + buyback pool |
+| `rotate_agent_authority(new_key)` | Builder | Key-compromise recovery — **mandatory, not optional** |
+| `slash_bond(amount, reason_hash)` | **Multisig** | Split 70/30 — see §6.3 |
 
 ### 3.3 Listing state machine
 
@@ -150,8 +178,8 @@ submit_listing        approve_listing
 | `balance` | `u64` | Current value, quote token |
 | `principal` | `u64` | Net deposits — used for AUM ceiling |
 | `high_water_mark` | `u64` | Fee basis — see §4.3 |
-| `position_cap_bps` | `u16` | Trader may override **stricter only** |
-| `max_drawdown_bps` | `u16` | Trader may override **stricter only** |
+| `position_cap_bps` | `u16` | Default 1200; trader may override **stricter only** |
+| `max_drawdown_bps` | `u16` | Default 1500; trader may override **stricter only** |
 | `auto_pause` | `bool` | |
 | `status` | `VaultStatus` | `Active` / `Paused` / `Closing` |
 | `last_fee_assessment` | `i64` | |
@@ -165,7 +193,7 @@ submit_listing        approve_listing
 | `deposit(amount)` | Trader | CPI to registry: reject if `aum_current + amount > aum_ceiling`. Raises HWM by `amount` |
 | `withdraw(amount)` | **Trader only** | Runs `assess_fees` first, then releases |
 | `execute_trade(venue, ix_data)` | `agent_authority` | Validated — see §4.4 |
-| `assess_fees` | Permissionless crank | Deducts fee, routes splits |
+| `assess_fees` | Permissionless crank | Weekly cadence; deducts fee, routes splits |
 | `pause_vault` / `resume_vault` | Trader | |
 | `close_vault` | Trader | Final assessment, return remainder, close |
 
@@ -181,13 +209,13 @@ up flat or down. **This must be enforced in-program, never off-chain.**
 // on assess_fees
 if vault.balance > vault.high_water_mark {
     let profit       = vault.balance - vault.high_water_mark;
-    let fee          = profit * listing.performance_fee_bps / 10_000;
-    let builder_cut  = fee * listing.builder_split_bps / 10_000;
+    let fee          = profit * 1_000 / 10_000;        // performance_fee_bps
+    let builder_cut  = fee * 8_000 / 10_000;           // builder_split_bps
     let platform_cut = fee - builder_cut;
 
     vault.balance         -= fee;
     vault.high_water_mark  = vault.balance;   // post-fee, prevents double-charging
-    // route builder_cut -> Streamflow stream
+    // route builder_cut  -> Streamflow stream
     // route platform_cut -> Squads treasury
 }
 ```
@@ -199,7 +227,7 @@ if vault.balance > vault.high_water_mark {
 
 ### 4.4 `execute_trade` validation
 
-Reject unless **all** hold:
+Reject unless **all six** hold:
 
 1. `vault.status == Active`
 2. `listing.status == Live`
@@ -218,12 +246,11 @@ transaction. Only the trader can resume.
 
 ## 5. Money flow — worked example
 
-Trader allocates **$10,000** to Agent X. Performance fee 10%, split 80/20.
+Trader allocates **$10,000** to Agent X. Listing fee 0%, performance fee 10%, split 80/20.
 
 | Step | Amount | Result |
 |---|---|---|
-| Trader deposits | $10,000 | Vault opens · balance $10,000 · **HWM $10,000** |
-| *(Optional)* listing fee 1.25% | −$125 | Charged regardless of performance — **recommend 0% at launch** |
+| Trader deposits | $10,000 | Vault opens · balance $10,000 · **HWM $10,000** · no upfront fee |
 | Agent trades over 3 months | → $12,000 | Profit above HWM = **$2,000** |
 | Performance fee: 10% of profit | −$200 | Assessed on withdrawal or weekly crank |
 | → Builder 80% | **$160** | Streamed via Streamflow |
@@ -238,10 +265,10 @@ The builder earns nothing until the vault exceeds $10,000 again.
 
 ### 5.1 Revenue streams summarised
 
-Only **two** are actual cash flow:
+Only **one** is currently cash flow at launch:
 
 1. **Performance fee** — 10% of net new profit, split 80/20 builder/platform
-2. **Listing fee** — upfront % of allocation · *recommended 0% at launch*
+2. **Listing fee** — set to **0 bps**; field retained for future use
 
 The rest are token mechanics, not income:
 - **Builder staking** — creates $AGENT demand tied to real AUM, not speculation
@@ -249,9 +276,64 @@ The rest are token mechanics, not income:
 
 ---
 
-## 6. Experience flows
+## 6. Staking / bond model
 
-### 6.1 Builder journey
+**Purpose:** make fraud economically irrational, and tie $AGENT demand to real usage
+rather than speculation.
+
+### 6.1 Bond scales with capital under management
+
+A fixed bond is meaningless once an agent manages 100× its value. Tiers are used
+rather than a live price oracle — simpler, no external dependency, auditable.
+
+| Tier | Bond ($AGENT) | AUM ceiling |
+|---|---|---|
+| 1 | *TBD* | $25,000 |
+| 2 | *TBD* | $150,000 |
+| 3 | *TBD* | $1,000,000 |
+
+> **Blocked on the $AGENT price/float decision.** Rule of thumb: bond value ≥ 10–15%
+> of the AUM ceiling it unlocks, or the deterrent is theatre. Tiers are fixed token
+> counts (no oracle); the multisig may revise them if price moves materially.
+
+The vault program rejects deposits that would push an agent past its tier ceiling.
+This creates organic buy pressure as agents succeed — demand follows usage, matching
+the "nothing provisioned ahead of demand" thesis in the public docs.
+
+### 6.2 Unbonding — 14 days
+
+A bond only deters fraud if it is still there when the fraud is caught. Without a
+delay, a builder can defraud traders and pull their entire stake in the same block,
+leaving nothing to slash.
+
+- `request_unbond` starts the clock **and immediately blocks new deposits** into that
+  builder's agents — no taking on fresh capital while exiting
+- The bond remains **fully slashable** for the entire 14 days
+- `withdraw_bond` succeeds only after the clock expires **and** only down to the tier
+  that still covers live AUM
+
+### 6.3 Slashing — be honest about what is trustless
+
+**Mechanically provable (program-enforced, no human):**
+- Attempting to route funds to a non-whitelisted program
+- Exceeding tier AUM ceiling
+
+**Subjective (multisig decision + published rationale):**
+- Wash trading / self-dealing
+- Coordinated manipulation
+
+Most real misconduct falls in the second bucket. Do **not** market this as "trustless
+slashing" — it is multisig-governed slashing with on-chain transparency, and claiming
+otherwise is the kind of overstatement the product is positioned against.
+
+**Slash destination: 70% to harmed traders, 30% to buyback pool.** Never 100% to
+treasury — that would create an incentive to slash.
+
+---
+
+## 7. Experience flows
+
+### 7.1 Builder journey
 
 1. Connect wallet → **SIWS signature** *(already live in the app)*
 2. `register_builder`
@@ -262,7 +344,7 @@ The rest are token mechanics, not income:
 7. Bot calls `execute_trade` within enforced limits
 8. Revenue share streams to builder wallet via Streamflow
 
-### 6.2 Trader journey
+### 7.2 Trader journey
 
 1. Browse leaderboard / agent profile *(already live)*
 2. Connect wallet
@@ -271,7 +353,7 @@ The rest are token mechanics, not income:
 5. Agent trades; trader monitors in **`/dashboard`**
 6. `pause_vault` any time; `withdraw` any time — **no lockup**
 
-### 6.3 Mapping to what already exists
+### 7.3 Mapping to what already exists
 
 | Already built | Becomes |
 |---|---|
@@ -288,20 +370,31 @@ data-layer change, not a redesign.
 
 ---
 
-## 7. Open questions blocking a contractor quote
+## 8. Phase mapping
 
-1. **Which prediction-market programs get whitelisted?** Determines the entire CPI
-   surface of `execute_trade` — the most expensive instruction to build and audit.
-   **Highest priority.**
-2. **$AGENT bond tier amounts** — needs a price/float decision. Rule of thumb: bond
-   value ≥ 10–15% of the AUM ceiling it unlocks, or the deterrent is theatre.
-3. **Quote token** — USDC assumed throughout. Confirm.
-4. **Upgrade authority** on each program, and whether it is burned post-audit.
-5. **Fee crank** — who runs the keeper, who pays its gas.
+| Phase | On-chain scope |
+|---|---|
+| **1 (MVP)** | `agent_registry` + `agent_vault` on devnet → audit → mainnet. Streamflow revenue share live. |
+| **2** | Buyback keeper (Jupiter), sub-tokens (Meteora DBC), audit report published |
+| **3** | Open SDK, external venue integrations |
 
 ---
 
-## 8. Risks to state plainly
+## 9. Open questions blocking a contractor quote
+
+1. **Which prediction-market programs are whitelisted?** Determines the entire CPI
+   surface of `execute_trade` — the most expensive instruction to build and audit.
+   Need: program ID(s), IDL/SDK, and whether launch is one venue or several.
+   **Highest priority.**
+2. **$AGENT bond tier amounts** — needs mint address, price, and float. Fixed token
+   counts assumed (no oracle).
+3. **Quote token** — USDC assumed throughout. Confirm.
+4. **Upgrade authority** on each program, and whether it is burned post-audit.
+5. **Fee crank** — who runs the weekly keeper, who pays its gas.
+
+---
+
+## 10. Risks to state plainly
 
 - **Regulatory.** Taking a performance fee on third-party trading capital resembles
   regulated investment-advisory activity in several jurisdictions. Get legal advice
@@ -317,6 +410,6 @@ data-layer change, not a redesign.
 
 ## Appendix — suggested contractor review order
 
-1. §4.4 `execute_trade` + §7.1 venue whitelist → scope the hardest instruction
+1. §4.4 `execute_trade` + §9.1 venue whitelist → scope the hardest instruction
 2. §4.3 high-water-mark accounting → hardest correctness surface
 3. §3 ↔ §4 bond tier vs vault AUM enforcement → cross-program invariant
