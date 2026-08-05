@@ -414,8 +414,98 @@ data-layer change, not a redesign.
 
 ---
 
+## 11. The governance attack surface — designed against a real precedent
+
+> **This section is not theoretical. It describes how a comparable Solana protocol lost $285M in
+> April 2026, and the specific defences the vault must ship with.**
+
+### 11.1 What happened to Drift
+
+On 1 April 2026 Drift Protocol — then the largest DeFi protocol on Solana — lost **$285M**, the
+second largest exploit in Solana's history. The sequence:
+
+1. Attackers spent **months** building relationships with the Drift team
+2. They used Solana **durable nonces** to get Security Council members to unknowingly sign
+   transactions that remained valid indefinitely
+3. Those signatures handed over **admin control**
+4. With admin rights, they **whitelisted a worthless token (CVT) as collateral** at an
+   artificial price
+5. They borrowed against it and drained $285M in real USDC, SOL, and ETH
+
+**No smart contract bug was involved.** The code did exactly what it was told by an authority it
+had every reason to trust. Recovery required ~$150M of external support, the protocol suspended
+withdrawals, and it has since relaunched under a new identity with prediction markets dropped.
+
+### 11.2 Why this is our worst case, almost exactly
+
+`agent_vault` will hold a **`VenueWhitelist` managed by the multisig**. That is structurally the
+same object as Drift's collateral whitelist.
+
+An attacker holding our multisig could:
+
+| Action | Consequence |
+|---|---|
+| Add a malicious program to `VenueWhitelist` | `execute_trade` CPIs into it and **drains every vault** |
+| `set_vault_authority` (registry) | Falsify AUM, bypass tier ceilings |
+| `transfer_authority` (registry) | Complete, permanent takeover |
+| `slash_bond` | Drain every builder bond |
+
+The whitelist is the crown jewel. Guardrails already bound the multisig on *fees*
+(§3.1 — perf ≤ 20%, split ≥ 50%), but an unbounded whitelist makes those guardrails irrelevant:
+a malicious venue does not need a high fee to take everything.
+
+### 11.3 Required defences
+
+**These are requirements for `agent_vault`, not suggestions.** Retrofitting them after launch is
+much harder than building them in.
+
+1. **Timelock on whitelist additions — mandatory.** A newly whitelisted venue must be unusable
+   for a fixed delay (recommend **72 hours**) after being added. This alone would have blunted
+   the Drift attack: the malicious collateral was usable immediately. A timelock converts a
+   silent instant drain into a public, observable pending change.
+
+2. **Timelock on `transfer_authority` and `set_vault_authority`**, same reasoning.
+
+3. **A guardian key that can cancel but not initiate.** Asymmetric power is the point: the
+   guardian can veto any pending change during its timelock but can never propose one. Cheap to
+   implement, and it means compromising the multisig is not sufficient on its own.
+
+4. **Removal is immediate; addition is delayed.** Emergency response must always be faster than
+   emergency damage. Removing a venue, pausing a listing, or pausing the whole vault should take
+   effect in the same transaction.
+
+5. **Consider a per-venue TVL cap during a ramp-in window** — a newly added venue handles at most
+   a small share of total vault value for its first weeks, bounding the blast radius of a
+   whitelist mistake made in good faith.
+
+### 11.4 Operational requirements for whoever holds the multisig
+
+The Drift compromise was social, not technical, so the code-level defences above are necessary
+but not sufficient.
+
+- **Never sign a transaction whose contents you have not independently verified.** The Drift
+  council members believed they were signing something benign.
+- **Understand durable nonces.** A durable-nonce transaction does not expire. A signature given
+  today can be executed months later, at a moment of the attacker's choosing. Treat any request
+  to sign one as hostile until proven otherwise.
+- **Expect long-horizon social engineering.** The attackers invested months. Assume a
+  counterparty who is friendly, patient, technically credible, and wrong to trust.
+- Use Squads' transaction simulation and require multiple independent reviewers to decode
+  proposed instruction data rather than trusting a description of it.
+
+### 11.5 The honest framing
+
+Our public docs promise audited contracts. An audit would **not** have caught the Drift attack —
+there was no bug to find. Worth being clear internally, and ideally publicly, that an audit
+bounds *code* risk, not *governance* risk. The timelock and guardian are what bound governance
+risk, and they belong in the security page alongside the audit claim.
+
+---
+
 ## Appendix — suggested contractor review order
 
-1. §4.4 `execute_trade` + §9.1 venue whitelist → scope the hardest instruction
-2. §4.3 high-water-mark accounting → hardest correctness surface
-3. §3 ↔ §4 bond tier vs vault AUM enforcement → cross-program invariant
+1. **§11 governance attack surface** → the timelock and guardian requirements shape the whole
+   admin design; read before anything else
+2. §4.4 `execute_trade` + §9.1 venue whitelist → scope the hardest instruction
+3. §4.3 high-water-mark accounting → hardest correctness surface
+4. §3 ↔ §4 bond tier vs vault AUM enforcement → cross-program invariant

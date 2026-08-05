@@ -80,19 +80,28 @@ The limitation is coverage, not mechanism.
 
 ## 2. Other Solana-native venues
 
-### 2.1 Drift BET — currently the strongest first integration
+### 2.1 Drift BET — ❌ RULED OUT
 
-Launched June 2026 on Drift Protocol, Solana's established perps exchange. Drew $3M+ liquidity
-at debut.
+**An earlier revision of this document recommended Drift BET as the strongest first
+integration. That recommendation is withdrawn.**
 
-- **Coverage:** crypto (30 assets), sports (F1, Crypto Fight Night), debates, culture
-- **Native Solana**, no bridging
-- **Drift has mature public SDK and documentation** — the only one of the three that does
-- **Capital-efficient:** collateral keeps earning lending yield while backing a position, which
-  is real added value for traders in our vaults
+On **1 April 2026** Drift Protocol suffered a **$285M exploit** — the largest of 2026 and the
+second largest in Solana's history, wiping out more than half its TVL. Deposits and withdrawals
+were suspended. Recovery is backed by roughly $150M from Tether and partners, and the protocol
+is relaunching under a new identity, **Velocity** (private beta July 2026).
 
-Breadth is narrower than Polymarket's but materially wider than Forecast's, and the
-documentation maturity meaningfully de-risks integration.
+Velocity describes itself as *"a fork of Drift Protocol v2, deployed under its own program ID
+with a reduced, more secure feature set"* — perpetual futures, swaps, and lending only.
+**Prediction markets were dropped.** `docs.drift.trade` now redirects to Velocity's
+documentation.
+
+So Drift BET is not a viable venue: the protocol that hosted it is mid-recovery, and its
+successor deliberately does not carry the product.
+
+**The attack matters to us beyond ruling out a venue.** It was not a code bug — it was months of
+social engineering against the multisig, ending in a malicious asset being whitelisted. That is
+a near-exact template for how our own vault could be drained. Written up as a design
+requirement in `agent-registry-and-vault.md` §11.
 
 ### 2.2 World — powers Phantom
 
@@ -107,14 +116,18 @@ found**. Would require direct contact before it can be evaluated.
 
 ## 3. Comparison
 
-| | Forecast (`bisonfi`) | Drift BET | World | Predict via `polymarket` |
+| | Forecast (`bisonfi`) | World | Predict via `polymarket` | ~~Drift BET~~ |
 |---|---|---|---|---|
-| Settles on Solana | ✅ | ✅ | ✅ | ❌ Polygon |
-| Position readable on-chain | ✅ Token-2022 | Likely — needs confirming | Unknown | ❓ unresolved |
-| Enforcement atomicity | ✅ if CPI supported | ✅ if CPI supported | Unknown | ❌ |
-| Public dev docs | ✅ | ✅ **best of the three** | ❌ | ✅ |
-| Market breadth | ❌ BTC only | 🟡 crypto, sports, culture | 🟡 BTC + events | ✅ widest |
-| Program ID published | ✅ | Via Drift SDK | ❌ | n/a |
+| Settles on Solana | ✅ | ✅ | ❌ Polygon | — |
+| Position readable on-chain | ✅ Token-2022 | Unknown | ❓ unresolved | — |
+| Enforcement atomicity | ✅ if CPI supported | Unknown | ❌ | — |
+| Public dev docs | ✅ | ❌ | ✅ | — |
+| Market breadth | ❌ BTC only | 🟡 BTC + events | ✅ widest | — |
+| Program ID published | ✅ | ❌ | n/a | — |
+| Status | Live | Live | Live | ❌ **$285M exploit, product discontinued** |
+
+The field is thinner than it looked. Only **two** genuinely native Solana candidates remain, one
+with no public documentation and the other currently BTC-only.
 
 ---
 
@@ -232,23 +245,33 @@ program-enforced product, versus only usable for a UI.*
 Then:
 
 - **CPI supported + native providers cover real breadth** → Jupiter, Solana, everything we have
-  built ships. Best outcome.
+  built ships. Best outcome by a wide margin.
 - **CPI supported but only `bisonfi` is native (BTC-only)** → build the mechanism on Forecast to
-  prove it, and add **Drift BET** for breadth. The §4 post-condition design makes the second
-  venue comparatively cheap.
-- **CPI not supported anywhere** → Drift BET becomes the primary candidate, since it is native
-  and has the best public SDK. Polygon/Solidity only if no Solana venue supports program
-  integration at all.
+  prove it works, launch narrow, and pursue **World** for breadth. The §4 post-condition design
+  makes the second venue comparatively cheap.
+- **CPI not supported anywhere on Jupiter** → the Solana-native field is down to World, which has
+  no public documentation. At that point Polygon/Solidity becomes a serious option again,
+  despite the rewrite cost and weaker enforcement.
 
 ### On sequencing
 
-The strategic call — **Solana-native first, other chains as a Phase 2 upgrade** — is right. It
-keeps $AGENT, the wallet stack, and the deployed registry coherent.
+The strategic call — **Solana-native first, other chains as a Phase 2 upgrade** — remains right.
+It keeps $AGENT, the wallet stack, and the deployed registry coherent.
 
 **But build one venue first, not three.** One venue is roughly 40% of the work of three, and the
 post-condition design makes later venues cheap *once the first is proven*. Building three
 integrations before validating that the enforcement mechanism works at all is how you end up
 with three broken ones.
 
-Suggested order: **Drift BET first** (native, decent breadth, best public docs), then Forecast,
-then World once it publishes documentation.
+Suggested order: **Jupiter Forecast first** — it is the only remaining candidate with both a
+published program ID and public documentation, so it is the only one we can build against
+without waiting on anyone. Then World, once it publishes docs or responds to contact.
+
+### Two things worth doing regardless of the venue answer
+
+1. **Contact World.** It is now one of only two native candidates and we know almost nothing
+   about it. Phantom distribution and event-market breadth make it strategically valuable, and
+   the absence of public docs is the only thing blocking evaluation.
+2. **Design the vault's governance defences now** (`agent-registry-and-vault.md` §11). They are
+   venue-independent, they are the highest-severity risk in the system, and the Drift precedent
+   shows the cost of getting them wrong is total.
