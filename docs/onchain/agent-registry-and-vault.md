@@ -97,6 +97,7 @@ keypair with scoped authority to call `execute_trade` on vaults assigned to its 
 |---|---|---|
 | `authority` | `Pubkey` | Builder's wallet |
 | `bond_amount` | `u64` | Staked $AGENT |
+| `total_aum` | `u64` | Sum across all this builder's listings — **this is the figure the tier ceiling is enforced against** |
 | `tier` | `u8` | 0 = unstaked, 1–3 |
 | `unbond_requested_at` | `i64` | 0 if none; starts the 14-day clock |
 | `slash_count` | `u16` | Public track record |
@@ -119,13 +120,18 @@ keypair with scoped authority to call `execute_trade` on vaults assigned to its 
 | `position_cap_bps` | `u16` | **1200** |
 | `max_drawdown_bps` | `u16` | **1500** |
 | `auto_pause` | `bool` | `true` |
-| `aum_current` | `u64` | Sum of vault principal — enforced against tier ceiling |
-| `aum_ceiling` | `u64` | Derived from builder tier |
+| `aum_current` | `u64` | Per-listing bookkeeping. The *enforced* ceiling is builder-level — see note below |
 | `vault_count` | `u32` | |
 | `approved_at` | `i64` | |
 | `bump` | `u8` | |
 
 **`BondVault`** — PDA seeds `["bond", builder]` · SPL token account holding staked $AGENT
+
+> **The AUM ceiling is enforced per *builder*, not per listing.** An earlier draft put
+> `aum_ceiling` on each listing; that is duplicated state derived from a builder-level
+> tier, and it can drift. It also gets the security wrong: a builder able to defraud
+> across three agents is exposed for the sum, so three listings must not each carry a
+> full ceiling. `Builder.total_aum` is the enforced figure.
 
 ### 3.2 Instructions
 
