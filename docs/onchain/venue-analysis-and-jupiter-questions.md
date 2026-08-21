@@ -1,12 +1,21 @@
 # Venue Analysis — Where Agents Actually Trade
 
-**Status:** Research, August 2026 · Decision pending
+**Status:** Research, August 2026 · **Q1 and Q3 answered 21 August — see §5**
 **Blocks:** `agent_vault` (spec §9.1). `agent_registry` is unaffected — built, tested, and
 deployed to devnet at `22rFHvivAX4hDwx3NdwfQ1hsyorwDFxc9JLy5WcZV7x6`.
+
+> **Read §5 first.** Jupiter has confirmed that Predict is keeper-settled and no Solana program
+> can trade it atomically. Polymarket is keeper-settled too, so the atomicity framing that
+> organises §0 through §4 below no longer separates the two chains. Those sections are accurate
+> as research and obsolete as a decision procedure.
 
 ---
 
 ## 0. The question that decides everything
+
+> **Superseded.** This section assumed atomic CPI into a venue was achievable somewhere. It is
+> not — on either chain. The live version of this question is at the end of §5: *between order
+> placement and keeper settlement, where do the funds sit?*
 
 The vault's core guarantee is that it verifies position cap and drawdown **in the same
 transaction as the trade**. That requires the venue to be a Solana program the vault can CPI
@@ -155,6 +164,51 @@ venue-agnostic — which is what makes adding the second and third venue cheap.
 
 ## 5. Questions for Jupiter
 
+### ANSWERED — 21 August 2026, by @JupDevRel on X
+
+After three weeks of unanswered DMs across four devrel leads, the GitHub org and the support
+Discord, a public post got a reply within days. Verbatim:
+
+> 1. no it cannot. we use keepers offchain as well, so your program will not be compatible
+>
+> 2. not sure what you mean
+>
+> 3. if im understanding your question correctly, it requires our keepers to settle
+
+**Q2 was badly worded on our side and has been re-asked.** The other two are decisive.
+
+### What this means
+
+**Jupiter Predict is keeper-settled. A Solana program cannot open or close a position
+atomically alongside its own risk checks.** Not for bridged providers, not for native ones —
+answer 3 confirms keepers settle regardless of provider.
+
+The consequence is larger than "Solana is out", and it cuts the other way from what we expected:
+
+**Polymarket is keeper-settled too.** Both candidate venues have the same shape. The atomicity
+question we thought would decide Solana versus Polygon does not distinguish them at all. The
+§4 post-condition design does not work on either chain as originally written, and the
+authorise-then-veto design that replaced it is needed on both.
+
+So the chain decision no longer turns on atomicity. It turns on a narrower question:
+
+### The question that now decides it
+
+**Between order placement and keeper settlement, where do the funds sit?**
+
+- If they stay in our program's PDA until settlement, the keeper cannot move them without a CPI
+  into our program. That is a veto inside their settlement transaction — the same hook EIP-1271
+  gives us on EVM, and arguably stronger, since it is a hard requirement of the token transfer
+  rather than a courtesy callback.
+- If funds must be pre-deposited into a Jupiter-owned account, custody is surrendered at deposit
+  time and the non-custodial design cannot be built on Solana at all.
+
+This is a yes/no, it is the only thing still outstanding, and it has been put to them along with
+a request for 15 minutes with whoever owns that part of the stack.
+
+### Original questions, for the record
+
+
 ### Context to open with
 
 > We are building Agent Circle — a marketplace where developers list self-hosted trading agents
@@ -239,6 +293,29 @@ program-enforced product, versus only usable for a UI.*
 ---
 
 ## 6. Recommendation
+
+> **Superseded 21 August 2026 by the answers recorded in §5.** Q1 and Q3 came back: Jupiter
+> Predict is keeper-settled and no Solana program can trade it atomically. The three branches
+> below were all written assuming CPI might be possible. They are kept for the record; the
+> live recommendation is immediately underneath.
+
+### Current recommendation
+
+**Both venues are keeper-settled, so atomicity no longer selects a chain.** Build the
+authorise-then-veto design — reserve an order's worst case before signing it, and refuse the
+signature at settlement if live state has moved — because it is required on Solana and Polygon
+alike. That work is done and tested in the EVM repository.
+
+Decide the chain on the one open question in §5: whether funds remain in our PDA until a
+Jupiter keeper settles. If they do, Solana has an equivalent veto hook and remains preferred.
+If they must be pre-deposited into a Jupiter-owned account, Polygon wins by default, because
+EIP-1271 gives us a settlement-time veto that Solana would then lack.
+
+Nothing built so far is wasted either way. The registry is chain-independent in design, and the
+reservation and permission-free-exit mechanisms are needed on whichever chain wins.
+
+### Superseded branches
+
 
 **Do not commit to a venue before Q1–Q3 are answered.**
 
