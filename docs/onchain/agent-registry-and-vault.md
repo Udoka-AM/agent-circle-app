@@ -459,6 +459,23 @@ a malicious venue does not need a high fee to take everything.
 **These are requirements for `agent_vault`, not suggestions.** Retrofitting them after launch is
 much harder than building them in.
 
+> **Status, 21 August 2026 — items 2, 3 and 4 are built in `agent_registry`.**
+> `instructions/governance.rs`, 14 tests. `transfer_authority`, `set_vault_authority` and
+> `update_tiers` no longer exist as direct instructions; each is now queue → wait → execute,
+> with a guardian able to veto during the wait and to pause any listing instantly. Item 1
+> (the venue whitelist) and item 5 belong to `agent_vault` and remain outstanding. The same
+> design is implemented and tested in Solidity as `VenueWhitelist.sol` in the EVM repository.
+>
+> Two things worth recording that the list below did not anticipate:
+>
+> - **`set_timelock_delay` had to be increase-only.** A settable delay is a hole: a
+>   compromised authority does not need to defeat the timelock, it simply shortens it to
+>   the floor, queues, and executes inside the window it chose. Allowing only increases means
+>   the delay in force is always at least the one the guardian agreed to.
+> - **The guardian's pause is one-directional.** It can stop a live listing and cannot
+>   resume one. An emergency key that could also restart an agent would be a key that can put
+>   capital back at risk.
+
 1. **Timelock on whitelist additions — mandatory.** A newly whitelisted venue must be unusable
    for a fixed delay (recommend **72 hours**) after being added. This alone would have blunted
    the Drift attack: the malicious collateral was usable immediately. A timelock converts a
